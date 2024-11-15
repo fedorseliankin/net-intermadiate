@@ -1,0 +1,15 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/net-intermediate/FileContentIndex
+/.vs/net-intermediate/v17
+/.vs/ProjectEvaluation
+/.vs/net-intermediate/DesignTimeBuild
+/net-intermediate/bin/Debug/net8.0
+/net-intermediate/obj
+/net-intermediate.integrationTests/obj
+/net-intermediate.unitTests/bin/Debug/net8.0
+/net-intermediate.unitTests/obj/Debug/net8.0
+/net-intermediate.unitTests/obj
+.vs/net-intermediate/config/applicationhost.config
