@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using net_intermediate;
 using net_intermediate.Controllers;
@@ -14,11 +15,16 @@ namespace net_inermediate.uTests.Controllers
         private readonly OrdersController _controller;
         private readonly CancellationToken _cancellationToken;
         private readonly Mock<ITicketingContext> _mockContext;
+        private readonly Mock<IMemoryCache> _mockMemoryCache;
 
         public OrdersControllerTests()
         {
+            _mockMemoryCache = new Mock<IMemoryCache>(MockBehavior.Strict);
+            Mock<ICacheEntry> mockCacheEntry = new Mock<ICacheEntry>();
+            _mockMemoryCache.Setup(m => m.CreateEntry(It.IsAny<object>())).Returns(mockCacheEntry.Object);
+            _mockMemoryCache.Setup(m => m.TryGetValue(It.IsAny<object>(), out It.Ref<object>.IsAny)).Returns(false);
             _mockRepository = new Mock<ICartRepository>();
-            _controller = new OrdersController(_mockRepository.Object);
+            _controller = new OrdersController(_mockMemoryCache.Object, _mockRepository.Object);
             _cancellationToken = new CancellationToken(false);
             _mockContext = new Mock<ITicketingContext>();
             _mockContext.Setup(c => c.Events).Returns(new Mock<DbSet<Event>>().Object);
@@ -61,19 +67,28 @@ namespace net_inermediate.uTests.Controllers
         {
             var cartId = Guid.NewGuid();
             var newItem = new CartItem { EventId = 1, SeatId = 101 };
+            var cacheKey = $"Cart_{cartId}";
 
             _mockRepository.Setup(repo => repo.AddToCartAsync(cartId, newItem, It.IsAny<CancellationToken>()))
-                     .Verifiable();
+                           .Returns(Task.CompletedTask)
+                           .Verifiable("Add to cart was never called.");
 
             var mockCart = new Cart { CartId = cartId, Items = new List<CartItem> { newItem } };
             _mockRepository.Setup(repo => repo.GetCartAsync(cartId, It.IsAny<CancellationToken>()))
-                     .ReturnsAsync(mockCart);
+                           .ReturnsAsync(mockCart)
+                           .Verifiable("Cart was never retrieved.");
+
+            _mockMemoryCache.Setup(cache => cache.Remove(cacheKey))
+                            .Verifiable("Cache remove was never called for the cart.");
 
             var result = await _controller.AddToCart(cartId, newItem, CancellationToken.None);
+
             var okResult = Assert.IsType<OkObjectResult>(result);
             var returnedCart = Assert.IsType<Cart>(okResult.Value);
-
             Assert.Single(returnedCart.Items);
+
+            _mockRepository.Verify();
+            _mockMemoryCache.Verify(cache => cache.Remove(cacheKey), Times.Once(), "Cache was not properly invalidated.");
         }
         [Fact]
         public async Task RemoveFromCart_ReturnsOkResult_WithUpdatedCart()
@@ -81,33 +96,44 @@ namespace net_inermediate.uTests.Controllers
             var cartId = Guid.NewGuid();
             var eventId = 1;
             var seatId = 101;
+            var cacheKey = $"Cart_{cartId}";
             _mockRepository.Setup(repo => repo.RemoveFromCartAsync(cartId, eventId, seatId, It.IsAny<CancellationToken>()))
-                     .Verifiable();
-
-            var updatedCart = new Cart { CartId = cartId, Items = new List<CartItem>() }; // Assuming the item was removed
+                           .Returns(Task.CompletedTask);
+            var updatedCart = new Cart { CartId = cartId, Items = new List<CartItem>() };
             _mockRepository.Setup(repo => repo.GetCartAsync(cartId, It.IsAny<CancellationToken>()))
-                     .ReturnsAsync(updatedCart);
+                           .ReturnsAsync(updatedCart);
+            _mockMemoryCache.Setup(m => m.Remove(cacheKey)).Verifiable();
 
             var result = await _controller.RemoveFromCart(cartId, eventId, seatId, CancellationToken.None);
 
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnedCart = Assert.IsType<Cart>(okResult.Value);
-            Assert.Empty(returnedCart.Items); // Expect the cart to be empty since items were removed
+            Assert.IsType<OkObjectResult>(result);
+            var okResult = result as OkObjectResult;
+            var returnedCart = okResult.Value as Cart;
+            Assert.Empty(returnedCart.Items);
+            _mockMemoryCache.Verify(m => m.Remove(cacheKey), Times.Once);
+            _mockRepository.VerifyAll();
         }
 
         [Fact]
         public async Task BookCart_ReturnsOkResult_WithPaymentId()
         {
             var cartId = Guid.NewGuid();
+            var expectedPayment = new Payment { PaymentId = Guid.NewGuid() };
+            var cacheKey = $"Cart_{cartId}";
+
             _mockRepository.Setup(repo => repo.ClearCartAsync(cartId, It.IsAny<CancellationToken>()))
-                     .Verifiable();
+                           .Verifiable();
+
+            _mockMemoryCache.Setup(cache => cache.Remove(cacheKey))
+                            .Verifiable("Cache was not invalidated for the booked cart.");
 
             var result = await _controller.BookCart(cartId, CancellationToken.None);
 
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var responseObject = Assert.IsType<Payment>(okResult.Value);
-            Assert.NotNull(responseObject);
-            Assert.True(responseObject.PaymentId is Guid); // Checks if the response has a payment Id as GUID
+            var paymentResult = Assert.IsType<Payment>(okResult.Value);
+
+            _mockMemoryCache.Verify(cache => cache.Remove(cacheKey), Times.Once, "Cache entry for cart was not properly removed.");
+
             _mockRepository.Verify(repo => repo.ClearCartAsync(cartId, It.IsAny<CancellationToken>()), Times.Once);
         }
     }

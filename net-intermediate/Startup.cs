@@ -15,6 +15,7 @@ namespace net_intermediate
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddMemoryCache();
 
             services.AddDbContext<TicketingContext>(options =>
                 options.UseMySQL("server=localhost;database=netintermediate;user=root;password=Fyodor123!"));
