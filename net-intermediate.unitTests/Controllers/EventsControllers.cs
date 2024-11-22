@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using net_intermediate;
 using net_intermediate.Controllers;
@@ -15,11 +16,16 @@ namespace net_inermediate.uTests.Controllers
         private readonly EventsController _controller;
         private readonly CancellationToken _cancellationToken;
         private readonly Mock<ITicketingContext> _mockContext;
+        private readonly Mock<IMemoryCache> _mockMemoryCache;
 
         public EventsControllerTests()
         {
             _mockRepository = new Mock<IEventRepository>();
-            _controller = new EventsController(_mockRepository.Object);
+            _mockMemoryCache = new Mock<IMemoryCache>(MockBehavior.Strict);
+            Mock<ICacheEntry> mockCacheEntry = new Mock<ICacheEntry>();
+            _mockMemoryCache.Setup(m => m.CreateEntry(It.IsAny<object>())).Returns(mockCacheEntry.Object);
+            _mockMemoryCache.Setup(m => m.TryGetValue(It.IsAny<object>(), out It.Ref<object>.IsAny)).Returns(false);
+            _controller = new EventsController(_mockMemoryCache.Object, _mockRepository.Object);
             _cancellationToken = new CancellationToken(false);
             _mockContext = new Mock<ITicketingContext>();
             _mockContext.Setup(c => c.Events).Returns(new Mock<DbSet<Event>>().Object);
