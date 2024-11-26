@@ -21,8 +21,6 @@ namespace net_intermediate.Models
         public string EventId { get; set; }
         public string SeatNumber { get; set; }
         public decimal Price { get; set; }
-        [JsonIgnore]
-        public Event Event { get; set; }
     }
     public class Venue
     {
@@ -78,8 +76,6 @@ namespace net_intermediate.Models
         public string EventId { get; set; }
         public string SeatId { get; set; }
         public string PriceOptionId { get; set; }
-        [JsonIgnore]
-        public virtual Cart Cart { get; set; }
         [JsonIgnore]
         public virtual Event Event { get; set; }
         [JsonIgnore]

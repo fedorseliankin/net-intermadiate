@@ -24,7 +24,7 @@ namespace net_intermediate.uTests.Repositories
             var cartItems = new List<CartItem>
             {
                 new CartItem { CartId = Guid.NewGuid().ToString(), EventId = "1", SeatId = "101" },
-                new CartItem { CartId = Guid.NewGuid().ToString(), EventId = "1", SeatId = "101" }
+                new CartItem { CartId = Guid.NewGuid().ToString(), EventId = "1", SeatId = "102" }
             };
 
             _mockDbSetCartItem = cartItems.AsQueryable().BuildMockDbSet();
@@ -43,8 +43,22 @@ namespace net_intermediate.uTests.Repositories
             {
                 var cartId = Guid.NewGuid().ToString();
                 var eventEntity = new Event { Id = "1", Name = "Concert", Description = "A live concert event" };
-                var seatEntity = new Seat { SeatId = "1", RowId = "5", SeatName = "A1" };
                 var priceOption = new PriceOption { Id = "1", Name = "Regular Price" };
+                var seatEntity = new Seat
+                {
+                    RowId = "A",
+                    SeatId = "101",
+                    Status = SeatStatus.Booked,
+                    SeatName = "A1",
+                    PriceOption = priceOption,
+                    Section = new Section
+                    {
+                        SectionId = "1",
+                        SectionName = "Section1",
+                        VenueId = "1",
+                    },
+                    SectionId = "1",
+                };
                 var cart = new Cart
                 {
                     CartId = cartId,
@@ -95,7 +109,7 @@ namespace net_intermediate.uTests.Repositories
         {
             string cartId = Guid.NewGuid().ToString();
             var cart = new Cart { CartId = cartId };
-            var cartItem = new CartItem();
+            var cartItem = new CartItemRequest { CartId = cartId };
 
             _mockDbSetCart.Setup(x => x.FindAsync(cartId, It.IsAny<CancellationToken>()))
                           .ReturnsAsync(cart);
@@ -110,7 +124,7 @@ namespace net_intermediate.uTests.Repositories
 
             await repository.AddToCartAsync(cartId, cartItem, CancellationToken.None);
 
-            _mockContext.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Exactly(1));
+            _mockContext.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
             _mockDbSetCartItem.Verify();
             Assert.Equal(cartId, cartItem.CartId);
         }
@@ -119,7 +133,7 @@ namespace net_intermediate.uTests.Repositories
         public async Task AddToCartAsync_CartNotExists_CreatesCartAndAddsItem()
         {
             string cartId = Guid.NewGuid().ToString();
-            var cartItem = new CartItem();
+            var cartItem = new CartItemRequest { CartId = cartId };
 
             _mockDbSetCart.Setup(x => x.FindAsync(cartId, It.IsAny<CancellationToken>()))
                           .ReturnsAsync((Cart)null);
@@ -174,24 +188,25 @@ namespace net_intermediate.uTests.Repositories
                 var eventEntity = new Event { Id = "1", Name = "Concert", Description = "A live concert event" };
                 var priceOption = new PriceOption { Id = "1", Name = "Regular Price" };
                 var seatEntity = new Seat { SeatId = "1", RowId = "5", SeatName = "A1", PriceOption = priceOption, SectionId = Guid.NewGuid().ToString() };
+                var cartItemId = Guid.NewGuid().ToString();
+                var Items = new List<CartItem>
+                    {
+                        new CartItem { EventId = "1", SeatId = "1", PriceOptionId = "1", CartItemId = cartItemId  }
+                    };
                 var cart = new Cart
                 {
                     CartId = cartId,
-                    Items = new List<CartItem>
-                    {
-                        new CartItem { Event = eventEntity, Seat = seatEntity, PriceOption = priceOption, CartItemId = Guid.NewGuid().ToString()  }
-                    }
+                    Items = Items,
                 };
-                context.AddRange(eventEntity, seatEntity, priceOption);
+                context.CartItems.AddRange(Items);
+                context.PriceOptions.Add(priceOption);
+                context.Events.Add(eventEntity);
+                context.Seats.Add(seatEntity);
                 context.Carts.Add(cart);
                 await context.SaveChangesAsync();
                 var mockTransactionManager = new Mock<IDatabaseTransactionManager>();
                 mockTransactionManager.Setup(m => m.BeginTransaction(It.IsAny<IsolationLevel>()))
                                       .Returns(Mock.Of<IDbContextTransaction>());
-
-                _mockContext.Setup(m => m.Carts).Returns(_mockDbSetCart.Object);
-                _mockContext.Setup(m => m.CartItems).Returns(_mockDbSetCartItem.Object);
-
                 var repository = new CartRepository(context, mockTransactionManager.Object);
 
                 await repository.ClearCartAsync(cartId, CancellationToken.None);

@@ -121,10 +121,13 @@ namespace net_intermediate.Repositories
 
         public async Task ClearCartAsync(string cartId, CancellationToken ct)
         {
-            var cart = await GetCartAsync(cartId, ct);
+            var cart = await _context.Carts.FirstOrDefaultAsync(c => c.CartId == cartId);
             if (cart != null)
             {
-                _context.CartItems.RemoveRange(cart.Items);
+                foreach (var item in cart.Items)
+                {
+                    _context.CartItems.Remove(item);
+                } 
                 await _context.SaveChangesAsync(ct);
             }
         }

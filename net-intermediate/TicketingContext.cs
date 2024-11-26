@@ -68,19 +68,13 @@ namespace net_intermediate
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Event>()
-                .HasMany(e => e.Tickets)
-                .WithOne(t => t.Event)
-                .HasForeignKey(t => t.EventId);
+                .HasMany(e => e.Tickets);
 
             modelBuilder.Entity<Venue>()
                 .HasMany(v => v.Sections)
                 .WithOne(s => s.Venue)
                 .HasForeignKey(s => s.VenueId);
             modelBuilder.Entity<CartItem>().HasKey(ci => ci.CartItemId);
-            modelBuilder.Entity<CartItem>()
-                .HasOne(c => c.Cart)
-                .WithMany(c => c.Items)
-                .HasForeignKey(c => c.CartId);
             modelBuilder.Entity<Seat>()
                 .Property(e => e.Status)
                 .HasConversion(

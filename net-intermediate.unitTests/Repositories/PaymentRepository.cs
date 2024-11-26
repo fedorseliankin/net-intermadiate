@@ -88,7 +88,24 @@ namespace net_intermediate.uTests.Repositories
                     Status = "Pending",
                     Seats = new List<Seat>
                     {
-                        new Seat { RowId = "A", SeatId = "101", Status = SeatStatus.Booked, SeatName = "A1" }
+                        new Seat {
+                            RowId = "A",
+                            SeatId = "101",
+                            Status = SeatStatus.Booked,
+                            SeatName = "A1",
+                            PriceOption = new PriceOption
+                            {
+                                Id = "1",
+                                Name = "Default",
+                            },
+                            Section = new Section
+                            {
+                                SectionId = "1",
+                                SectionName = "Section1",
+                                VenueId = "1",
+                            },
+                            SectionId = "1",
+                        }
                     }
                 };
                 context.Payments.Add(existingPayment);
