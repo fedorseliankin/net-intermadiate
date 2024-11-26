@@ -47,42 +47,62 @@ namespace net_intermediate.Repositories
 
         public async Task AddToCartAsync(string cartId, CartItemRequest request, CancellationToken ct)
         {
-            using (var transaction = _transactionManager.BeginTransaction(System.Data.IsolationLevel.Serializable))
+            int retryCount = 0;
+            bool isCompleted = false;
+
+            while (!isCompleted && retryCount < 5)  // Allows up to 5 retries
             {
-                try
+                using (var transaction = _transactionManager.BeginTransaction(System.Data.IsolationLevel.Serializable))
                 {
-                    var cart = await _context.Carts.FindAsync(request.CartId, ct);
-                    if (cart == null)
+                    try
                     {
-                        cart = new Cart { CartId = request.CartId };
-                        await _context.Carts.AddAsync(cart, ct);
+                        var cart = await _context.Carts.FindAsync(new object[] { request.CartId }, ct);
+                        if (cart == null)
+                        {
+                            cart = new Cart { CartId = request.CartId };
+                            await _context.Carts.AddAsync(cart, ct);
+                            await _context.SaveChangesAsync(ct);
+                        }
+                        var seatAlreadyBooked = await _context.CartItems
+                           .AnyAsync(ci => ci.SeatId == request.SeatId && ci.EventId == request.EventId, ct);
+
+                        if (seatAlreadyBooked)
+                        {
+                            throw new InvalidOperationException("This seat is already booked.");
+                        }
+
+                        var item = new CartItem
+                        {
+                            CartId = request.CartId,
+                            SeatId = request.SeatId,
+                            EventId = request.EventId,
+                            PriceOptionId = request.PriceOptionId
+                        };
+
+                        await _context.CartItems.AddAsync(item, ct);
                         await _context.SaveChangesAsync(ct);
+
+                        transaction.Commit();
+                        isCompleted = true;
                     }
-                    var seatAlreadyBooked = await _context.CartItems
-                       .AnyAsync(ci => ci.SeatId == request.SeatId && ci.EventId == request.EventId, ct);
-
-                    if (seatAlreadyBooked)
+                    catch (DbUpdateException ex) when (ex.InnerException != null && ex.InnerException.Message.Contains("Deadlock"))
                     {
-                        throw new InvalidOperationException("This seat is already booked.");
+                        // Rollback the transaction and increment the retry counter
+                        transaction.Rollback();
+                        retryCount++;
+                        await Task.Delay(200 * retryCount, ct);  // Exponential back-off
                     }
-
-                    var item = new CartItem
+                    catch
                     {
-                        CartId = request.CartId,
-                        SeatId = request.SeatId,
-                        EventId = request.EventId,
-                        PriceOptionId = request.PriceOptionId
-                    };
+                        transaction.Rollback();
+                        throw;  // Rethrow any other exception which is not handled here
+                    }
+                }
+            }
 
-                    await _context.CartItems.AddAsync(item, ct);
-                    await _context.SaveChangesAsync(ct);
-                    transaction.Commit();
-                }
-                catch
-                {
-                    transaction.Rollback();
-                    throw;
-                }
+            if (!isCompleted)
+            {
+                throw new Exception("Failed to add item to cart after multiple retries.");
             }
         }
 

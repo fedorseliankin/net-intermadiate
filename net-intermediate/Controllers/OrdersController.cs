@@ -57,9 +57,9 @@ namespace net_intermediate.Controllers
             {
                 return BadRequest(ex.Message);
             }
-            finally
+            catch (Exception ex)
             {
-                Console.WriteLine("smth went wrong");
+                return BadRequest(ex.Message);
             }
         }
 

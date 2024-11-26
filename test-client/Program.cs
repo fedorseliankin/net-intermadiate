@@ -10,16 +10,16 @@ public class Program
         var httpClient = new HttpClient();
         for (int i = 0; i < 10; i++)
         {
-            var CartId = "1230303" + i.ToString();
+            var CartId = "1230303";
             var body = new
             {
                 EventId = "example",
-                SeatId = "seat-id-12",
+                SeatId = "seat-id-17",
                 PriceOptionId  = "1",
                 CartId,
             };
             tasks.Add(httpClient.PostAsync(
-                "https://localhost:7154/api/orders/carts/1230303", new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json")));
+                $"https://localhost:7154/api/orders/carts/{CartId}", new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json")));
         }
 
         var responses = await Task.WhenAll(tasks);
