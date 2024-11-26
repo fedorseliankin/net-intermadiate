@@ -24,7 +24,7 @@ namespace net_intermediate.Controllers
 
         // GET /venues/{venue_id}/sections
         [HttpGet("{venueId}/sections")]
-        public async Task<ActionResult<IEnumerable<Section>>> GetSectionsByVenueId(int venueId, CancellationToken ct)
+        public async Task<ActionResult<IEnumerable<Section>>> GetSectionsByVenueId(string venueId, CancellationToken ct)
         {
             var sections = await _venueRepository.GetSectionsByVenueIdAsync(venueId, ct);
             if (sections == null || !sections.Any())

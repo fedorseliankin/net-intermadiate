@@ -15,7 +15,7 @@ namespace net_inermediate.Controllers
         }
 
         [HttpGet("{paymentId}")]
-        public async Task<IActionResult> GetPayment(Guid paymentId, CancellationToken ct)
+        public async Task<IActionResult> GetPayment(string paymentId, CancellationToken ct)
         {
             var payment = await _paymentRepository.GetPaymentAsync(paymentId, ct);
             if (payment == null) return NotFound();
@@ -23,14 +23,14 @@ namespace net_inermediate.Controllers
         }
 
         [HttpPost("{paymentId}/complete")]
-        public async Task<IActionResult> CompletePayment(Guid paymentId, CancellationToken ct)
+        public async Task<IActionResult> CompletePayment(string paymentId, CancellationToken ct)
         {
             await _paymentRepository.UpdatePaymentAndSeatsStatusAsync(paymentId, "Complete", "Sold", ct);
             return Ok();
         }
 
         [HttpPost("{paymentId}/failed")]
-        public async Task<IActionResult> FailPayment(Guid paymentId, CancellationToken ct)
+        public async Task<IActionResult> FailPayment(string paymentId, CancellationToken ct)
         {
             await _paymentRepository.UpdatePaymentAndSeatsStatusAsync(paymentId, "Failed", "Available", ct);
             return Ok();

@@ -3,54 +3,93 @@ using net_intermediate.Models;
 
 namespace net_intermediate.Repositories
 {
+    public class CartItemRequest
+    {
+        public string CartId { get; set; }
+        public string SeatId { get; set; }
+        public string EventId { get; set; }
+        public string PriceOptionId { get; set; }
+    }
     public interface ICartRepository
     {
-        Task<Cart> GetCartAsync(Guid cartId, CancellationToken ct);
-        Task AddToCartAsync(Guid cartId, CartItem item, CancellationToken ct);
-        Task RemoveFromCartAsync(Guid cartId, int eventId, int seatId, CancellationToken ct);
-        Task ClearCartAsync(Guid cartId, CancellationToken ct);
-
+        Task<Cart> GetCartAsync(string cartId, CancellationToken ct);
+        Task AddToCartAsync(string cartId, CartItemRequest item, CancellationToken ct);
+        Task RemoveFromCartAsync(string cartId, string eventId, string seatId, CancellationToken ct);
+        Task ClearCartAsync(string cartId, CancellationToken ct);
+        Task<bool> SeatIsBooked(string seatId, string eventId, CancellationToken ct);
     }
     public class CartRepository : ICartRepository
     {
         private readonly ITicketingContext _context;
+        private readonly IDatabaseTransactionManager _transactionManager;
 
-        public CartRepository(ITicketingContext context)
+        public CartRepository(ITicketingContext context, IDatabaseTransactionManager transactionManager)
         {
             _context = context;
+            _transactionManager = transactionManager;
         }
-
-        public async Task<Cart> GetCartAsync(Guid cartId, CancellationToken ct)
+        public async Task<bool> SeatIsBooked(string seatId, string eventId, CancellationToken ct)
+        {
+            return await _context.CartItems.AnyAsync(item => item.SeatId == seatId && item.EventId == eventId, ct);
+        }
+        public async Task<Cart> GetCartAsync(string cartId, CancellationToken ct)
         {
             return await _context.Carts
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Event)
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Seat)
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.PriceOption)
-                .FirstOrDefaultAsync(c => c.CartId == cartId, ct);
+            .Include(c => c.Items)
+                .ThenInclude(i => i.Event)
+            .Include(c => c.Items)
+                .ThenInclude(i => i.Seat)
+            .Include(c => c.Items)
+                .ThenInclude(i => i.PriceOption)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.CartId == cartId, ct);
         }
 
-        public async Task AddToCartAsync(Guid cartId, CartItem item, CancellationToken ct)
+        public async Task AddToCartAsync(string cartId, CartItemRequest request, CancellationToken ct)
         {
-            var cart = await _context.Carts.FindAsync(cartId, ct);
-            if (cart == null)
+            using (var transaction = _transactionManager.BeginTransaction(System.Data.IsolationLevel.Serializable))
             {
-                cart = new Cart { CartId = cartId };
-                await _context.Carts.AddAsync(cart, ct);
-                await _context.SaveChangesAsync(ct);
-            }
+                try
+                {
+                    var cart = await _context.Carts.FindAsync(request.CartId, ct);
+                    if (cart == null)
+                    {
+                        cart = new Cart { CartId = request.CartId };
+                        await _context.Carts.AddAsync(cart, ct);
+                        await _context.SaveChangesAsync(ct);
+                    }
+                    var seatAlreadyBooked = await _context.CartItems
+                       .AnyAsync(ci => ci.SeatId == request.SeatId && ci.EventId == request.EventId, ct);
 
-            item.CartId = cartId;
-            await _context.CartItems.AddAsync(item, ct);
-            await _context.SaveChangesAsync(ct);
+                    if (seatAlreadyBooked)
+                    {
+                        throw new InvalidOperationException("This seat is already booked.");
+                    }
+
+                    var item = new CartItem
+                    {
+                        CartId = request.CartId,
+                        SeatId = request.SeatId,
+                        EventId = request.EventId,
+                        PriceOptionId = request.PriceOptionId
+                    };
+
+                    await _context.CartItems.AddAsync(item, ct);
+                    await _context.SaveChangesAsync(ct);
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
         }
 
-        public async Task RemoveFromCartAsync(Guid cartId, int eventId, int seatId, CancellationToken ct)
+        public async Task RemoveFromCartAsync(string cartId, string eventId, string seatId, CancellationToken ct)
         {
             var item = await _context.CartItems
-                .Where(ci => ci.CartId == cartId && ci.EventId == eventId && ci.SeatId == seatId)
+                .Where(ci => ci.CartId == cartId.ToString() && ci.EventId == eventId && ci.SeatId == seatId)
                 .FirstOrDefaultAsync(ct);
 
             if (item != null)
@@ -60,7 +99,7 @@ namespace net_intermediate.Repositories
             }
         }
 
-        public async Task ClearCartAsync(Guid cartId, CancellationToken ct)
+        public async Task ClearCartAsync(string cartId, CancellationToken ct)
         {
             var cart = await GetCartAsync(cartId, ct);
             if (cart != null)

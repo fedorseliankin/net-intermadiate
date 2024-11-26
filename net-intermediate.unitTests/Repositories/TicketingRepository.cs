@@ -36,19 +36,19 @@ namespace net_intermediate.uTests.Repositories
         [Fact]
         public async Task Get_ShouldReturnTicketById()
         {
-            int ticketID = 1;
+            string ticketID = "1";
             Ticket ticket = new Ticket { TicketId = ticketID };
             var ticketRepository = new TicketRepository(_mockContext.Object);
 
             _mockSet.Setup(x => x.FindAsync(ticketID, _cancellationToken)).ReturnsAsync(ticket);
-            var result = await ticketRepository.Get(1, _cancellationToken);
+            var result = await ticketRepository.Get("1", _cancellationToken);
 
             Assert.Equal(ticket, result);
         }
         [Fact]
         public async Task Update_ShouldCallUpdateOnDbContext()
         {
-            var ticket = new Ticket { TicketId = 1, EventId = 2, SeatNumber = "A1", Price = 100.00M };
+            var ticket = new Ticket { TicketId = "1", EventId = "2", SeatNumber = "A1", Price = 100.00M };
             var ticketRepository = new TicketRepository(_mockContext.Object);
 
             await ticketRepository.Update(ticket, _cancellationToken);
@@ -60,8 +60,8 @@ namespace net_intermediate.uTests.Repositories
         [Fact]
         public async Task Delete_ShouldRemoveTicket_WhenTicketExists()
         {
-            var ticketId = 1;
-            var ticket = new Ticket { TicketId = ticketId, EventId = 2, SeatNumber = "A1", Price = 100.00M };
+            string ticketId = "1";
+            var ticket = new Ticket { TicketId = ticketId, EventId = "2", SeatNumber = "A1", Price = 100.00M };
             _mockSet.Setup(m => m.FindAsync(ticketId, _cancellationToken)).ReturnsAsync(ticket);
             var ticketRepository = new TicketRepository(_mockContext.Object);
 
@@ -75,7 +75,7 @@ namespace net_intermediate.uTests.Repositories
         [Fact]
         public async Task Delete_ShouldNotRemoveTicket_WhenTicketDoesNotExist()
         {
-            var ticketId = 1;
+            string ticketId = "1";
             _mockSet.Setup(m => m.FindAsync(ticketId, _cancellationToken)).ReturnsAsync((Ticket)null);
             var ticketRepository = new TicketRepository(_mockContext.Object);
 

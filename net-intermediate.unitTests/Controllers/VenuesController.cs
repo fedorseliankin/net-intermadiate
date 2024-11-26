@@ -21,8 +21,8 @@ namespace net_intermediate.uTests.Controllers
         {
             var mockVenues = new List<Venue>
             {
-                new Venue { VenueId = 1, Name = "Venue1" },
-                new Venue { VenueId = 2, Name = "Venue2" }
+                new Venue { VenueId = "1", Name = "Venue1" },
+                new Venue { VenueId = "2", Name = "Venue2" }
             };
             _mockRepo.Setup(repo => repo.GetAllVenuesAsync(It.IsAny<CancellationToken>()))
                      .ReturnsAsync(mockVenues);
@@ -36,11 +36,11 @@ namespace net_intermediate.uTests.Controllers
         [Fact]
         public async Task GetSectionsByVenueId_ReturnsOkResult_WithSections()
         {
-            var venueId = 1;
+            string venueId = "1";
             var mockSections = new List<Section>
             {
-                new Section { SectionId = 1, VenueId = venueId, SectionName = "Section1" },
-                new Section { SectionId = 2, VenueId = venueId, SectionName = "Section2" }
+                new Section { SectionId = "1", VenueId = venueId, SectionName = "Section1" },
+                new Section { SectionId = "2", VenueId = venueId, SectionName = "Section2" }
             };
             _mockRepo.Setup(repo => repo.GetSectionsByVenueIdAsync(venueId, It.IsAny<CancellationToken>()))
                      .ReturnsAsync(mockSections);
@@ -55,7 +55,7 @@ namespace net_intermediate.uTests.Controllers
         [Fact]
         public async Task GetSectionsByVenueId_ReturnsNotFound_WhenNoSectionsExist()
         {
-            var venueId = 999;
+            string venueId = "555";
             _mockRepo.Setup(repo => repo.GetSectionsByVenueIdAsync(venueId, It.IsAny<CancellationToken>()))
                      .ReturnsAsync(new List<Section>());
 

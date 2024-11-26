@@ -56,7 +56,7 @@ namespace net_intermediate.Controllers
 
         // GET: /events/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<Event>> GetEvent(int id, CancellationToken ct)
+        public async Task<ActionResult<Event>> GetEvent(string id, CancellationToken ct)
         {
             var cacheKey = $"Event_{id}";
             if (!_memoryCache.TryGetValue(cacheKey, out Event eventItem))

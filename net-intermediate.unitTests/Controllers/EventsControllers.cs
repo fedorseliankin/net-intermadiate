@@ -47,7 +47,7 @@ namespace net_inermediate.uTests.Controllers
         [Fact]
         public async Task GetEvent_ReturnsNotFound()
         {
-            int eventId = 1;
+            string eventId = "1";
             _mockRepository.Setup(r => r.GetAsync(eventId, _cancellationToken)).ReturnsAsync((Event)null);
 
             var result = await _controller.GetEvent(eventId, _cancellationToken);
@@ -58,7 +58,7 @@ namespace net_inermediate.uTests.Controllers
         [Fact]
         public async Task GetEvent_ReturnsEvent()
         {
-            int eventId = 1;
+            string eventId = "1";
             var expectedEvent = new Event { Id = eventId };
             _mockRepository.Setup(r => r.GetAsync(eventId, _cancellationToken)).ReturnsAsync(expectedEvent);
 

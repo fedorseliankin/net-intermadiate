@@ -53,7 +53,7 @@ namespace net_intermediate.uTests.Repositories
         {
             using (var context = new TicketingContext(_options))
             {
-                var paymentId = Guid.NewGuid();
+                var paymentId = Guid.NewGuid().ToString();
                 var payment = new Payment
                 {
                     PaymentId = paymentId,
@@ -76,9 +76,9 @@ namespace net_intermediate.uTests.Repositories
         public async Task UpdatePaymentAndSeatsStatusAsync_ValidUpdate_UpdatesStatus()
         {
             var options = new DbContextOptionsBuilder<TicketingContext>()
-                .UseInMemoryDatabase(databaseName: "UpdateSeatsTestDB") // Use a unique name to avoid cross-contamination
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // Use a unique name to avoid cross-contamination
                 .Options;
-            var paymentId = Guid.NewGuid();
+            var paymentId = Guid.NewGuid().ToString();
 
             using (var context = new TicketingContext(options))
             {
@@ -88,7 +88,7 @@ namespace net_intermediate.uTests.Repositories
                     Status = "Pending",
                     Seats = new List<Seat>
                     {
-                        new Seat { RowId = "A", SeatId = 101, Status = SeatStatus.Booked, SeatName = "A1" }
+                        new Seat { RowId = "A", SeatId = "101", Status = SeatStatus.Booked, SeatName = "A1" }
                     }
                 };
                 context.Payments.Add(existingPayment);

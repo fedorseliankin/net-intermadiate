@@ -33,7 +33,7 @@ namespace net_inermediate.uTests.Controllers
         [Fact]
         public async Task GetCart_ReturnsOkObjectResult_IfCartExists()
         {
-            var cartId = Guid.NewGuid();
+            var cartId = Guid.NewGuid().ToString();
             var mockCart = new Cart
             {
                 CartId = cartId,
@@ -53,7 +53,7 @@ namespace net_inermediate.uTests.Controllers
         [Fact]
         public async Task GetCart_ReturnsNotFound_IfCartDoesNotExist()
         {
-            var cartId = Guid.NewGuid();
+            var cartId = Guid.NewGuid().ToString();
             _mockRepository.Setup(repo => repo.GetCartAsync(cartId, It.IsAny<CancellationToken>()))
                      .ReturnsAsync((Cart)null);
 
@@ -65,8 +65,8 @@ namespace net_inermediate.uTests.Controllers
         [Fact]
         public async Task AddToCart_ReturnsOkResult_WithUpdatedCart()
         {
-            var cartId = Guid.NewGuid();
-            var newItem = new CartItem { EventId = 1, SeatId = 101 };
+            var cartId = Guid.NewGuid().ToString();
+            var newItem = new CartItem { EventId = "1", SeatId = "101" };
             var cacheKey = $"Cart_{cartId}";
 
             _mockRepository.Setup(repo => repo.AddToCartAsync(cartId, newItem, It.IsAny<CancellationToken>()))
@@ -81,7 +81,7 @@ namespace net_inermediate.uTests.Controllers
             _mockMemoryCache.Setup(cache => cache.Remove(cacheKey))
                             .Verifiable("Cache remove was never called for the cart.");
 
-            var result = await _controller.AddToCart(cartId, newItem, CancellationToken.None);
+            var result = await _controller.AddToCart(cartId.ToString(), newItem, CancellationToken.None);
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             var returnedCart = Assert.IsType<Cart>(okResult.Value);
@@ -93,9 +93,9 @@ namespace net_inermediate.uTests.Controllers
         [Fact]
         public async Task RemoveFromCart_ReturnsOkResult_WithUpdatedCart()
         {
-            var cartId = Guid.NewGuid();
-            var eventId = 1;
-            var seatId = 101;
+            string cartId = Guid.NewGuid().ToString();
+            string eventId = "1";
+            string seatId = "101";
             var cacheKey = $"Cart_{cartId}";
             _mockRepository.Setup(repo => repo.RemoveFromCartAsync(cartId, eventId, seatId, It.IsAny<CancellationToken>()))
                            .Returns(Task.CompletedTask);
@@ -104,7 +104,7 @@ namespace net_inermediate.uTests.Controllers
                            .ReturnsAsync(updatedCart);
             _mockMemoryCache.Setup(m => m.Remove(cacheKey)).Verifiable();
 
-            var result = await _controller.RemoveFromCart(cartId, eventId, seatId, CancellationToken.None);
+            var result = await _controller.RemoveFromCart(cartId.ToString(), eventId, seatId, CancellationToken.None);
 
             Assert.IsType<OkObjectResult>(result);
             var okResult = result as OkObjectResult;
@@ -117,8 +117,8 @@ namespace net_inermediate.uTests.Controllers
         [Fact]
         public async Task BookCart_ReturnsOkResult_WithPaymentId()
         {
-            var cartId = Guid.NewGuid();
-            var expectedPayment = new Payment { PaymentId = Guid.NewGuid() };
+            string cartId = Guid.NewGuid().ToString();
+            var expectedPayment = new Payment { PaymentId = Guid.NewGuid().ToString() };
             var cacheKey = $"Cart_{cartId}";
 
             _mockRepository.Setup(repo => repo.ClearCartAsync(cartId, It.IsAny<CancellationToken>()))

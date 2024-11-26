@@ -22,10 +22,10 @@ namespace net_intermediate.uTests.Repositories
             _context = new TicketingContext(options);
             _repository = new VenueRepository(_context);
 
-            _context.Venues.AddRange(new Venue { VenueId = 1, Name = "Venue1" },
-                                     new Venue { VenueId = 2, Name = "Venue2" });
-            _context.Sections.AddRange(new Section { SectionId = 1, VenueId = 1, SectionName = "Section1" },
-                                       new Section { SectionId = 2, VenueId = 1, SectionName = "Section2" });
+            _context.Venues.AddRange(new Venue { VenueId = "1", Name = "Venue1" },
+                                     new Venue { VenueId = "2", Name = "Venue2" });
+            _context.Sections.AddRange(new Section { SectionId = "1", VenueId = "1", SectionName = "Section1" },
+                                       new Section { SectionId = "1", VenueId = "1", SectionName = "Section2" });
             _context.SaveChanges();
         }
         [Fact]
@@ -39,7 +39,7 @@ namespace net_intermediate.uTests.Repositories
         [Fact]
         public async Task GetSectionsByVenueIdAsync_ReturnsSectionsForGivenVenueId()
         {
-            var sections = await _repository.GetSectionsByVenueIdAsync(1, CancellationToken.None);
+            var sections = await _repository.GetSectionsByVenueIdAsync("1", CancellationToken.None);
 
             Assert.NotNull(sections);
             Assert.Equal(2, sections.Count());
@@ -48,7 +48,7 @@ namespace net_intermediate.uTests.Repositories
         [Fact]
         public async Task GetSectionsByVenueIdAsync_ReturnsEmpty_WhenNoSectionsExistForVenueId()
         {
-            var sections = await _repository.GetSectionsByVenueIdAsync(999, CancellationToken.None);
+            var sections = await _repository.GetSectionsByVenueIdAsync("999", CancellationToken.None);
 
             Assert.NotNull(sections);
             Assert.Empty(sections);

@@ -1,5 +1,6 @@
 ﻿using net_intermediate.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace net_intermediate
 {
@@ -16,6 +17,10 @@ namespace net_intermediate
         {
             services.AddControllers();
             services.AddMemoryCache();
+            services.AddControllers().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+            });
 
             services.AddDbContext<TicketingContext>(options =>
                 options.UseMySQL("server=localhost;database=netintermediate;user=root;password=Fyodor123!"));
@@ -26,6 +31,8 @@ namespace net_intermediate
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
             services.AddScoped<ITicketingContext, TicketingContext>();
+            services.AddScoped<IDatabaseTransactionManager, DatabaseTransactionManager>();
+
 
             services.AddSwaggerGen();
         }
