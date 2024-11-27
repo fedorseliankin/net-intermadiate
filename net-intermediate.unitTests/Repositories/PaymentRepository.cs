@@ -76,7 +76,7 @@ namespace net_intermediate.uTests.Repositories
         public async Task UpdatePaymentAndSeatsStatusAsync_ValidUpdate_UpdatesStatus()
         {
             var options = new DbContextOptionsBuilder<TicketingContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // Use a unique name to avoid cross-contamination
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) 
                 .Options;
             var paymentId = Guid.NewGuid().ToString();
 

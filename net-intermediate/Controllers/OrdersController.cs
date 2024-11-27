@@ -55,7 +55,7 @@ namespace net_intermediate.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(403, ex.Message);
             }
             catch (Exception ex)
             {

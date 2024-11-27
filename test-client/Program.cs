@@ -14,7 +14,7 @@ public class Program
             var body = new
             {
                 EventId = "example",
-                SeatId = "seat-id-17",
+                SeatId = "seat-id-19",
                 PriceOptionId  = "1",
                 CartId,
             };
