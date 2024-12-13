@@ -13,3 +13,7 @@
 /net-intermediate.unitTests/obj/Debug/net8.0
 /net-intermediate.unitTests/obj
 .vs/net-intermediate/config/applicationhost.config
+/net-intermediate.integrationTests/bin/Debug/net8.0
+/test-client/bin/Debug/net8.0
+/test-client/obj/Debug/net8.0
+/test-client/obj

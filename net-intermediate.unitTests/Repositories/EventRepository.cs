@@ -35,7 +35,7 @@ namespace net_intermediate.uTests.Repositories
         [Fact]
         public async Task DeleteAsync_ExistingEventId_RemovesEventAndSavesChanges()
         {
-            int eventId = 1;
+            string eventId = "1";
             Event eventToDelete = new Event { Id = eventId };
             var eventRepository = new EventRepository(_mockContext.Object);
 
@@ -50,7 +50,7 @@ namespace net_intermediate.uTests.Repositories
         [Fact]
         public async Task DeleteAsync_NonExistingEventId_DoesNotRemoveEventOrSaveChanges()
         {
-            int nonExistingEventId = 2;
+            string nonExistingEventId = "2";
             var eventRepository = new EventRepository(_mockContext.Object);
             _mockSet.Setup(x => x.FindAsync(nonExistingEventId, _cancellationToken)).ReturnsAsync((Event)null);
 

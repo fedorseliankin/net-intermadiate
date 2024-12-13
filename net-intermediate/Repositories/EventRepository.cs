@@ -6,9 +6,9 @@ namespace net_intermediate.Repositories
     public interface IEventRepository
     {
         Task AddAsync(Event eventEntity, CancellationToken cancellationToken);
-        Task<Event> GetAsync(int id, CancellationToken cancellationToken);
+        Task<Event> GetAsync(string id, CancellationToken cancellationToken);
         Task UpdateAsync(Event eventEntity, CancellationToken cancellationToken);
-        Task DeleteAsync(int id, CancellationToken cancellationToken);
+        Task DeleteAsync(string id, CancellationToken cancellationToken);
         Task<List<Event>> ListAsync(CancellationToken cancellationToken);
     }
     public class EventRepository : IEventRepository
@@ -25,7 +25,7 @@ namespace net_intermediate.Repositories
             await _context.SaveChangesAsync(ct);
         }
 
-        public async Task<Event> GetAsync(int id, CancellationToken ct)
+        public async Task<Event> GetAsync(string id, CancellationToken ct)
         {
             return await _context.Events.FindAsync(id, ct);
         }
@@ -36,7 +36,7 @@ namespace net_intermediate.Repositories
             await _context.SaveChangesAsync(ct);
         }
 
-        public async Task DeleteAsync(int id, CancellationToken ct)
+        public async Task DeleteAsync(string id, CancellationToken ct)
         {
             var e = await _context.Events.FindAsync(id, ct);
             if (e != null)

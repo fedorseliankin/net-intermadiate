@@ -6,9 +6,9 @@ namespace net_intermediate.Repositories
     public interface ITicketingRepository
     {
         Task AddAsync(Ticket ticket, CancellationToken ct);
-        Task<Ticket> Get(int id, CancellationToken ct);
+        Task<Ticket> Get(string id, CancellationToken ct);
         Task Update(Ticket ticket, CancellationToken ct);
-        Task Delete(int ticketId, CancellationToken ct);
+        Task Delete(string ticketId, CancellationToken ct);
 
     }
     public class TicketRepository : ITicketingRepository
@@ -26,7 +26,7 @@ namespace net_intermediate.Repositories
             await _context.SaveChangesAsync(ct);
         }
 
-        public async Task<Ticket> Get(int id, CancellationToken ct)
+        public async Task<Ticket> Get(string id, CancellationToken ct)
         {
             return await _context.Tickets.FindAsync(id, ct);
         }
@@ -37,7 +37,7 @@ namespace net_intermediate.Repositories
             await _context.SaveChangesAsync(ct);
         }
 
-        public async Task Delete(int ticketId, CancellationToken ct)
+        public async Task Delete(string ticketId, CancellationToken ct)
         {
             var ticket = await _context.Tickets.FindAsync(ticketId, ct);
             if (ticket != null)

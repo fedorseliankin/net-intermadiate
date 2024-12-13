@@ -6,8 +6,8 @@ namespace net_intermediate.Repositories
     public interface IPaymentRepository
     {
         SeatStatus ConvertStringToSeatStatus(string status);
-        Task<Payment> GetPaymentAsync(Guid paymentId, CancellationToken ct);
-        Task UpdatePaymentAndSeatsStatusAsync(Guid paymentId, string paymentStatus, string seatStatus, CancellationToken ct);
+        Task<Payment> GetPaymentAsync(string paymentId, CancellationToken ct);
+        Task UpdatePaymentAndSeatsStatusAsync(string paymentId, string paymentStatus, string seatStatus, CancellationToken ct);
 
     }
     public class PaymentRepository : IPaymentRepository
@@ -29,14 +29,14 @@ namespace net_intermediate.Repositories
                 throw new ArgumentException($"Invalid seat status value: {status}");
             }
         }
-        public async Task<Payment> GetPaymentAsync(Guid paymentId, CancellationToken ct)
+        public async Task<Payment> GetPaymentAsync(string paymentId, CancellationToken ct)
         {
             return await _context.Payments
                 .Include(p => p.Seats)
                 .FirstOrDefaultAsync(p => p.PaymentId == paymentId, ct);
         }
 
-        public async Task UpdatePaymentAndSeatsStatusAsync(Guid paymentId, string paymentStatus, string seatStatus, CancellationToken ct)
+        public async Task UpdatePaymentAndSeatsStatusAsync(string paymentId, string paymentStatus, string seatStatus, CancellationToken ct)
         {
             var payment = await GetPaymentAsync(paymentId, ct);
             if (payment == null)

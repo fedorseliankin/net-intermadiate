@@ -2,6 +2,10 @@
 using Microsoft.Extensions.Caching.Memory;
 using net_intermediate.Models;
 using net_intermediate.Repositories;
+using Nito.AsyncEx;
+using System.Collections.Concurrent;
+using System.Data;
+using System.Threading;
 
 namespace net_intermediate.Controllers
 {
@@ -11,6 +15,8 @@ namespace net_intermediate.Controllers
     {
         private readonly ICartRepository _cartRepository;
         private readonly IMemoryCache _memoryCache;
+        private readonly AsyncLock _mutex = new AsyncLock();
+
 
         public OrdersController(IMemoryCache memoryCache, ICartRepository cartRepository)
         {
@@ -19,7 +25,7 @@ namespace net_intermediate.Controllers
         }
 
         [HttpGet("{cartId}")]
-        public async Task<IActionResult> GetCart(Guid cartId, CancellationToken ct)
+        public async Task<IActionResult> GetCart(string cartId, CancellationToken ct)
         {
             var cacheKey = $"Cart_{cartId}";
             if (!_memoryCache.TryGetValue(cacheKey, out Cart cart))
@@ -38,16 +44,27 @@ namespace net_intermediate.Controllers
         }
 
         [HttpPost("{cartId}")]
-        public async Task<IActionResult> AddToCart(Guid cartId, [FromBody] CartItem item, CancellationToken ct)
+        public async Task<IActionResult> AddToCart(string cartId, [FromBody] CartItemRequest item, CancellationToken ct)
         {
-            await _cartRepository.AddToCartAsync(cartId, item, ct);
-            _memoryCache.Remove($"Cart_{cartId}");
+            try
+            {
+                await _cartRepository.AddToCartAsync(cartId, item, ct);
+                _memoryCache.Remove($"Cart_{cartId}");
 
-            return Ok(await _cartRepository.GetCartAsync(cartId, ct));
+                return Ok(await _cartRepository.GetCartAsync(cartId, ct));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(403, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpDelete("{cartId}/events/{eventId}/seats/{seatId}")]
-        public async Task<IActionResult> RemoveFromCart(Guid cartId, int eventId, int seatId, CancellationToken ct)
+        public async Task<IActionResult> RemoveFromCart(string cartId, string eventId, string seatId, CancellationToken ct)
         {
             await _cartRepository.RemoveFromCartAsync(cartId, eventId, seatId, ct);
             _memoryCache.Remove($"Cart_{cartId}");
@@ -56,12 +73,12 @@ namespace net_intermediate.Controllers
         }
 
         [HttpPut("{cartId}/book")]
-        public async Task<IActionResult> BookCart(Guid cartId, CancellationToken ct)
+        public async Task<IActionResult> BookCart(string cartId, CancellationToken ct)
         {
             await _cartRepository.ClearCartAsync(cartId, ct);
             _memoryCache.Remove($"Cart_{cartId}");
 
-            Guid paymentId = Guid.NewGuid();
+            string paymentId = Guid.NewGuid().ToString();
             return Ok(new Payment { PaymentId = paymentId });
         }
     }

@@ -1,9 +1,30 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using net_intermediate.Models;
+using System.Data;
 
 namespace net_intermediate
 {
+    public interface IDatabaseTransactionManager
+    {
+        IDbContextTransaction BeginTransaction(IsolationLevel isolationLevel);
+    }
+    public class DatabaseTransactionManager : IDatabaseTransactionManager
+    {
+        private readonly ITicketingContext _context;
+
+        public DatabaseTransactionManager(ITicketingContext context)
+        {
+            _context = context;
+        }
+
+        public IDbContextTransaction BeginTransaction(IsolationLevel isolationLevel)
+        {
+            return _context.Database.BeginTransaction(isolationLevel);
+        }
+    }
     public interface ITicketingContext : IDisposable
     {
         DbSet<Event> Events { get; set; }
@@ -20,6 +41,7 @@ namespace net_intermediate
         EntityEntry<TEntity> Entry<TEntity>(TEntity entity) where TEntity : class;
         void UpdateRange(params object[] entities);
         void Update<TEntity>(TEntity entity) where TEntity : class;
+        DatabaseFacade Database { get; }
     }
     public class TicketingContext : DbContext, ITicketingContext
     {
@@ -32,6 +54,7 @@ namespace net_intermediate
         public virtual DbSet<Cart> Carts { get; set; }
         public virtual DbSet<CartItem> CartItems { get; set; }
         public virtual DbSet<Payment> Payments { get; set; }
+        public new DatabaseFacade Database => base.Database;
 
         public TicketingContext(DbContextOptions<TicketingContext> options) : base(options)
         {
@@ -45,19 +68,13 @@ namespace net_intermediate
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Event>()
-                .HasMany(e => e.Tickets)
-                .WithOne(t => t.Event)
-                .HasForeignKey(t => t.EventId);
+                .HasMany(e => e.Tickets);
 
             modelBuilder.Entity<Venue>()
                 .HasMany(v => v.Sections)
                 .WithOne(s => s.Venue)
                 .HasForeignKey(s => s.VenueId);
-
-            modelBuilder.Entity<CartItem>()
-                .HasOne(c => c.Cart)
-                .WithMany(c => c.Items)
-                .HasForeignKey(c => c.CartId);
+            modelBuilder.Entity<CartItem>().HasKey(ci => ci.CartItemId);
             modelBuilder.Entity<Seat>()
                 .Property(e => e.Status)
                 .HasConversion(

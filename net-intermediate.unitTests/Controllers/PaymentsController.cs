@@ -19,7 +19,7 @@ namespace net_intermediate.uTests.Controllers
         [Fact]
         public async Task GetPayment_ReturnsNotFound_WhenPaymentDoesNotExist()
         {
-            var paymentId = Guid.NewGuid();
+            string paymentId = Guid.NewGuid().ToString();
             _mockRepo.Setup(x => x.GetPaymentAsync(paymentId, It.IsAny<CancellationToken>()))
                      .ReturnsAsync((Payment)null);
 
@@ -31,7 +31,7 @@ namespace net_intermediate.uTests.Controllers
         [Fact]
         public async Task GetPayment_ReturnsOkObjectResult_WithPayment_WhenPaymentExists()
         {
-            var paymentId = Guid.NewGuid();
+            string paymentId = Guid.NewGuid().ToString();
             var expectedPayment = new Payment { PaymentId = paymentId };
             _mockRepo.Setup(x => x.GetPaymentAsync(paymentId, It.IsAny<CancellationToken>()))
                      .ReturnsAsync(expectedPayment);
@@ -44,7 +44,7 @@ namespace net_intermediate.uTests.Controllers
         [Fact]
         public async Task CompletePayment_CallsRepository_WithCorrectParameters()
         {
-            var paymentId = Guid.NewGuid();
+            string paymentId = Guid.NewGuid().ToString();
             _mockRepo.Setup(x => x.UpdatePaymentAndSeatsStatusAsync(paymentId, "Complete", "Sold", It.IsAny<CancellationToken>()))
                      .Returns(Task.CompletedTask);
 
@@ -56,7 +56,7 @@ namespace net_intermediate.uTests.Controllers
         [Fact]
         public async Task CompletePayment_ReturnsOkResult()
         {
-            var paymentId = Guid.NewGuid();
+            string paymentId = Guid.NewGuid().ToString();
             _mockRepo.Setup(x => x.UpdatePaymentAndSeatsStatusAsync(paymentId, "Complete", "Sold", It.IsAny<CancellationToken>()))
                      .Returns(Task.CompletedTask);
 
@@ -68,7 +68,7 @@ namespace net_intermediate.uTests.Controllers
         [Fact]
         public async Task FailPayment_CallsRepository_WithCorrectParameters()
         {
-            var paymentId = Guid.NewGuid();
+            string paymentId = Guid.NewGuid().ToString();
             _mockRepo.Setup(x => x.UpdatePaymentAndSeatsStatusAsync(paymentId, "Failed", "Available", It.IsAny<CancellationToken>()))
                      .Returns(Task.CompletedTask);
 
@@ -80,7 +80,7 @@ namespace net_intermediate.uTests.Controllers
         [Fact]
         public async Task FailPayment_ReturnsOkResult()
         {
-            var paymentId = Guid.NewGuid();
+            string paymentId = Guid.NewGuid().ToString();
             _mockRepo.Setup(x => x.UpdatePaymentAndSeatsStatusAsync(paymentId, "Failed", "Available", It.IsAny<CancellationToken>()))
                      .Returns(Task.CompletedTask);
 

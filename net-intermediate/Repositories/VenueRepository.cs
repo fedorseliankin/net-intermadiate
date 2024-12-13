@@ -6,7 +6,7 @@ namespace net_intermediate.Repositories
     public interface IVenueRepository
     {
         Task<IEnumerable<Venue>> GetAllVenuesAsync(CancellationToken ct);
-        Task<IEnumerable<Section>> GetSectionsByVenueIdAsync(int venueId, CancellationToken ct);
+        Task<IEnumerable<Section>> GetSectionsByVenueIdAsync(string venueId, CancellationToken ct);
     }
 
     public class VenueRepository : IVenueRepository
@@ -23,7 +23,7 @@ namespace net_intermediate.Repositories
             return await _context.Venues.ToListAsync(ct);
         }
 
-        public async Task<IEnumerable<Section>> GetSectionsByVenueIdAsync(int venueId, CancellationToken ct)
+        public async Task<IEnumerable<Section>> GetSectionsByVenueIdAsync(string venueId, CancellationToken ct)
         {
             return await _context.Sections
                                  .Where(s => s.VenueId == venueId)

@@ -1,45 +1,52 @@
-﻿namespace net_intermediate.Models
+﻿
+
+using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace net_intermediate.Models
 {
     public class Event
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public DateTime DateTime { get; set; }
-
-        public ICollection<Ticket> Tickets { get; set; }
+        [JsonIgnore]
+        public ICollection<Ticket> Tickets { get; set; } = null!;
     }
     public class Ticket
     {
-        public int TicketId { get; set; }
-        public int EventId { get; set; }
+        public string TicketId { get; set; }
+        public string EventId { get; set; }
         public string SeatNumber { get; set; }
         public decimal Price { get; set; }
-        public Event Event { get; set; }
     }
     public class Venue
     {
-        public int VenueId { get; set; }
+        public string VenueId { get; set; }
         public string Name { get; set; }
+        [JsonIgnore]
         public ICollection<Section> Sections { get; set; }
     }
     public class Section
     {
-        public int SectionId { get; set; }
-        public int VenueId { get; set; }
+        public string SectionId { get; set; }
+        public string VenueId { get; set; }
         public string SectionName { get; set; }
-
+        [JsonIgnore]
         public Venue Venue { get; set; }
     }
     public class Seat
     {
-        public int SeatId { get; set; }
-        public int SectionId { get; set; }
+        public string SeatId { get; set; }
+        public string SectionId { get; set; }
         public string RowId { get; set; }
         public string SeatName { get; set; }
         public SeatStatus Status { get; set; }
+        [JsonIgnore]
         public PriceOption PriceOption { get; set; }
-
+        [JsonIgnore]
         public Section Section { get; set; }
     }
     public enum SeatStatus
@@ -50,31 +57,37 @@
     }
     public class PriceOption
     {
-        public int Id { get; set; }
+        public string Id { get; set; }
         public string Name { get; set; }
         public decimal Price { get; set; }
     }
     public class Cart
     {
-        public Guid CartId { get; set; }
+        public string CartId { get; set; }
+        [JsonIgnore]
         public virtual List<CartItem> Items { get; set; } = new List<CartItem>();
     }
     public class CartItem
     {
-        public int CartItemId { get; set; }
-        public Guid CartId { get; set; } // Foreign key for Cart
-        public int EventId { get; set; }
-        public int SeatId { get; set; }
-        public int PriceOptionId { get; set; }
-        public virtual Cart Cart { get; set; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public string CartItemId { get; set; }
+        public string CartId { get; set; } // Foreign key for Cart
+        public string EventId { get; set; }
+        public string SeatId { get; set; }
+        public string PriceOptionId { get; set; }
+        [JsonIgnore]
         public virtual Event Event { get; set; }
+        [JsonIgnore]
         public virtual Seat Seat { get; set; }
+        [JsonIgnore]
         public virtual PriceOption PriceOption { get; set; }
     }
     public class Payment
     {
-        public Guid PaymentId { get; set; }
+        public string PaymentId { get; set; }
         public string Status { get; set; }
+        [JsonIgnore]
         public virtual List<Seat> Seats { get; set; } = new List<Seat>();
     }
 }
