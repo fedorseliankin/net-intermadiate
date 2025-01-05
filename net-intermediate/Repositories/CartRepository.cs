@@ -1,5 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MessageQueue.Models;
+using MessageQueue;
+using Microsoft.EntityFrameworkCore;
 using net_intermediate.Models;
+using Newtonsoft.Json;
 
 namespace net_intermediate.Repositories
 {
@@ -84,6 +87,22 @@ namespace net_intermediate.Repositories
 
                         transaction.Commit();
                         isCompleted = true;
+                        var notificationMessage = new NotificationMessage
+                        {
+                            TrackingId = Guid.NewGuid(),
+                            OperationName = "Ticket Added to Checkout",
+                            Timestamp = DateTimeOffset.UtcNow,
+                            Params = new NotificationParameters
+                            {
+                                CustomerEmail = "customer@example.com", // Добавьте способ получения этих данных
+                                CustomerName = "Customer Name"
+                            },
+                            Content = JsonConvert.SerializeObject(item),
+                        };
+
+                        var producer = new RabbitMqProducer();
+                        await producer.InitQueue();
+                        await producer.SendMessage(notificationMessage);
                     }
                     catch (DbUpdateException ex) when (ex.InnerException != null && ex.InnerException.Message.Contains("Deadlock"))
                     {

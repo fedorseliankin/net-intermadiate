@@ -8,13 +8,13 @@ public class Program
     {
         var tasks = new List<Task<HttpResponseMessage>>();
         var httpClient = new HttpClient();
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 1; i++)
         {
             var CartId = "1230303";
             var body = new
             {
                 EventId = "example",
-                SeatId = "seat-id-19",
+                SeatId = "seat-id-33",
                 PriceOptionId  = "1",
                 CartId,
             };
